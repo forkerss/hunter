@@ -77,19 +77,19 @@ func webhook(w http.ResponseWriter, req *http.Request) {
 			log.Println("DingRobot:", err)
 			return
 		}
-		if err = pushMsgWithDingRobot(vuln.Data.Detail); err != nil {
+		if err = pushMsgWithDingRobot(vuln); err != nil {
 			log.Println("DingRobot:", err)
 		}
 	}
 }
 
-func pushMsgWithDingRobot(vuln vulnDetail) error {
+func pushMsgWithDingRobot(vuln webVuln) error {
 	if !config.WebHook.DingRobot.Enable {
 		return nil
 	}
 	var msg, extra, snapshot string
 
-	for k, v := range vuln.Extra {
+	for k, v := range vuln.Data.Detail.Extra {
 		extra += fmt.Sprintf(" %s:\n", k)
 		switch b := v.(type) {
 		case map[string]string:
@@ -107,7 +107,7 @@ func pushMsgWithDingRobot(vuln vulnDetail) error {
 		}
 	}
 
-	for _, v := range vuln.SnapShot {
+	for _, v := range vuln.Data.Detail.SnapShot {
 		switch b := v.(type) {
 		case []string:
 			for _, v1 := range b {
@@ -119,6 +119,6 @@ func pushMsgWithDingRobot(vuln vulnDetail) error {
 			}
 		}
 	}
-	msg = fmt.Sprintf("addr: '%s' \nextra:--- \n%s\npayload: '%v' \nsnapshot:--- \n%s\n", vuln.Addr, extra, vuln.Payload, snapshot)
+	msg = fmt.Sprintf("plugin: '%s' \naddr: '%s' \nextra:--- \n%s\npayload: '%v' \nsnapshot:--- \n%s\n", vuln.Data.Plugin, vuln.Data.Detail.Addr, extra, vuln.Data.Detail.Payload, snapshot)
 	return robot.SendText("Xray 漏洞信息 \n\n"+msg, nil, false)
 }
