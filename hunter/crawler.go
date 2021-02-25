@@ -15,6 +15,9 @@ import (
 
 // GenTask 生成任务
 func GenTask(ctx context.Context, wg *sync.WaitGroup) error {
+	var (
+		cmd *exec.Cmd
+	)
 	f, err := os.Open(config.Target.File)
 	if err != nil {
 		return err
@@ -24,8 +27,12 @@ func GenTask(ctx context.Context, wg *sync.WaitGroup) error {
 		return err
 	}
 	for _, target := range strings.Split(string(buf), "\n") {
-		if err = CrawlerScan(ctx, target, wg); err != nil {
-			return err
+		target = strings.TrimSpace(target)
+		log.Println(target)
+		cmd = exec.Command("bash", "-c", fmt.Sprintf("%s -t %s -http-proxy %s", config.Crawler.Radium.Path, target, config.Xray.Listen))
+		err = cmd.Run()
+		if err != nil {
+			log.Print(err)
 		}
 	}
 	return nil

@@ -40,7 +40,7 @@ type target struct {
 
 type config struct {
 	Xray    xray    `yaml:"xray"`
-	Crawler crawler `yaml:"crwaler"`
+	Crawler crawler `yaml:"crawler"`
 	Webhook webhook `yaml:"webhook"`
 	Target  target  `yaml:"target"`
 }
