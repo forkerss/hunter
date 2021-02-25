@@ -1,0 +1,19 @@
+webhook:
+  enable: true
+  listen: 127.0.0.1:5000
+  dingrobot:
+    enable: true
+    webhook: ""
+    secret: ""
+xray:
+  path: ./xray
+  listen: 127.0.0.1:7777
+crawler:
+  chrome: ""
+  crawlergo: # 360 crawlergo
+    enable: false
+  rad: # 长亭 rad
+    enable: true
+    path: ./rad
+target: # 目标来源
+  file: target.txt
