@@ -13,11 +13,9 @@ import (
 	"github.com/YE-Kits/hunter/config"
 )
 
-// GenTask 生成任务
-func GenTask(ctx context.Context, wg *sync.WaitGroup) error {
-	var (
-		cmd *exec.Cmd
-	)
+// GenCrawlerTask 生成爬虫任务
+func GenCrawlerTask(ctx context.Context, wg *sync.WaitGroup) error {
+	var rad *exec.Cmd
 	f, err := os.Open(config.Target.File)
 	if err != nil {
 		return err
@@ -28,52 +26,27 @@ func GenTask(ctx context.Context, wg *sync.WaitGroup) error {
 	}
 	for _, target := range strings.Split(string(buf), "\n") {
 		target = strings.TrimSpace(target)
-		log.Println(target)
-		cmd = exec.Command("bash", "-c", fmt.Sprintf("%s -t %s -http-proxy %s", config.Crawler.Radium.Path, target, config.Xray.Listen))
-		err = cmd.Run()
-		if err != nil {
-			log.Print(err)
+		log.Println("开始爬取:", target)
+		// 堵塞式的运行 rad 避免浪费过多资源
+		rad = exec.Command("bash", "-c", fmt.Sprintf("%s -t %s -http-proxy %s", config.Crawler.Radium.Path, target, config.Xray.Listen))
+		if err := rad.Start(); err != nil {
+			return err
 		}
-	}
-	return nil
-}
-
-// CrawlerScan 启动爬虫扫描
-func CrawlerScan(ctx context.Context, target string, wg *sync.WaitGroup) error {
-	if config.Crawler.Radium.Enable {
-		return startRadium(ctx, target, wg)
-	}
-	return startCrawlergo(ctx, target, wg)
-}
-
-func startRadium(ctx context.Context, target string, wg *sync.WaitGroup) error {
-	var (
-		cmd *exec.Cmd
-	)
-	cmd = exec.Command("bash", "-c", fmt.Sprintf("%s -t %s -http-proxy %s", config.Crawler.Radium.Path, target, config.Xray.Listen))
-	if err := cmd.Start(); err != nil {
-		return err
-	}
-
-	wg.Add(1)
-	go func(wg *sync.WaitGroup, cmd *exec.Cmd) {
-		defer wg.Done()
-		cmd.Wait()
-	}(wg, cmd)
-	go func(ctx context.Context, cmd *exec.Cmd) {
-		select {
-		case <-ctx.Done():
-			if cmd.ProcessState != nil {
-				return
+		wg.Add(1)
+		go func(ctx context.Context, wg *sync.WaitGroup, cmd *exec.Cmd) {
+			select {
+			case <-ctx.Done():
+				// 已经停止了
+				if cmd.ProcessState != nil {
+					return
+				}
+				if err := cmd.Process.Kill(); err != nil {
+					log.Printf("Rad process kill: %s\n", err)
+				}
 			}
-			if err := cmd.Process.Kill(); err != nil {
-				log.Printf("Rad process kill: %s\n", err)
-			}
-		}
-	}(ctx, cmd)
-	return nil
-}
-
-func startCrawlergo(ctx context.Context, target string, wg *sync.WaitGroup) error {
+		}(ctx, wg, rad)
+		rad.Wait()
+		wg.Done()
+	}
 	return nil
 }

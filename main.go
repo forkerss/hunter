@@ -42,15 +42,16 @@ func main() {
 		log.Println("bye")
 	}()
 
-	if err = hunter.StartWebhook(ctx, wg); err != nil {
-		log.Fatalln(err)
-	}
-	if err = hunter.StartXray(ctx, wg); err != nil {
-		log.Println(err)
-		return
-	}
+	// if err = hunter.StartWebhook(ctx, wg); err != nil {
+	// 	log.Fatalln(err)
+	// }
 
-	if err = hunter.GenTask(ctx, wg); err != nil {
+	// if err = hunter.StartXray(ctx, wg); err != nil {
+	// 	log.Println(err)
+	// 	return
+	// }
+
+	if err = hunter.GenCrawlerTask(ctx, wg); err != nil {
 		log.Println(err)
 		return
 	}
